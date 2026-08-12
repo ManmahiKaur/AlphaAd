@@ -19,6 +19,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://alpha-ad-13.vercel.app",
+        "https://alpha-ad-2b.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000",
     ],
@@ -36,6 +37,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     origin = request.headers.get("origin")
     allowed_origins = [
         "https://alpha-ad-13.vercel.app",
+        "https://alpha-ad-2b.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000",
     ]
@@ -86,6 +88,13 @@ async def root():
         "docs": "/docs",
         "version": settings.VERSION,
         "status": "ONLINE"
+    }
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "ok",
+        "version": settings.VERSION
     }
 
 if __name__ == "__main__":

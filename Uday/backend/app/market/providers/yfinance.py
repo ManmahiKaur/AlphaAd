@@ -128,7 +128,10 @@ class YFinanceProvider(BaseMarketDataProvider):
     async def fetch_market_data(self, ticker: str) -> Optional[MarketData]:
         ticker_clean = ticker.upper()
         try:
-            return await asyncio.to_thread(self._sync_fetch, ticker_clean)
+            return await asyncio.wait_for(asyncio.to_thread(self._sync_fetch, ticker_clean), timeout=8.0)
+        except asyncio.TimeoutError:
+            logger.warning(f"yfinance fetch timed out for {ticker_clean}")
+            return None
         except Exception as e:
             logger.warning(f"yfinance provider async call failed for {ticker_clean}: {e}")
             return None
@@ -139,7 +142,7 @@ class YFinanceProvider(BaseMarketDataProvider):
             
         results = []
         try:
-            async with httpx.AsyncClient(headers={'User-Agent': 'Mozilla/5.0'}) as client:
+            async with httpx.AsyncClient(headers={'User-Agent': 'Mozilla/5.0'}, timeout=5.0) as client:
                 r = await client.get(f'https://query2.finance.yahoo.com/v1/finance/search?q={query}&quotesCount=10&newsCount=0')
                 if r.status_code == 200:
                     data = r.json()
