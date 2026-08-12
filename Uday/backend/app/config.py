@@ -17,10 +17,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     
     # Database
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", 
-        "postgresql+asyncpg://postgres:postgres@localhost:5432/stock_advisor_db"
-    )
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
     SQLITE_FALLBACK: str = "sqlite+aiosqlite:///./stock_advisor.db"
     
     # Security
