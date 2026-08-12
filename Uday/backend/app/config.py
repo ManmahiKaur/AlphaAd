@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     SQLITE_FALLBACK: str = "sqlite+aiosqlite:///./stock_advisor.db"
     
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "SUPER_SECRET_JWT_KEY_PROD_GRADE_STOCK_ADVISOR_2026_SECURITY")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "development_only_secret_change_me")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days
