@@ -1,5 +1,6 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import init_db, Base
@@ -25,6 +26,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import logging
+    log = logging.getLogger("app.main")
+    log.error(f"Unhandled exception: {exc}", exc_info=True)
+    
+    origin = request.headers.get("origin")
+    allowed_origins = [
+        "https://alpha-ad-13.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ]
+    
+    headers = {}
+    if origin in allowed_origins:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+        headers["Access-Control-Allow-Methods"] = "*"
+        headers["Access-Control-Allow-Headers"] = "*"
+        
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error"},
+        headers=headers
+    )
 
 # Register API Routers
 app.include_router(auth.router, prefix=settings.API_V1_STR)
