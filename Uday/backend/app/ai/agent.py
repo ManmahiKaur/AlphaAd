@@ -24,9 +24,17 @@ class StockAnalysisAgent:
     @staticmethod
     async def fetch_data_node(state: AgentState) -> AgentState:
         ticker = state["ticker"]
-        mdata = await market_data_manager.get_market_data(ticker)
-        state["quote"] = mdata.quote.model_dump()
-        state["indicators"] = mdata.indicators.model_dump() if mdata.indicators else {}
+        try:
+            mdata = await market_data_manager.get_market_data(ticker)
+            if not mdata or not mdata.quote:
+                raise ValueError("No market data returned")
+            state["quote"] = mdata.quote.model_dump()
+            state["indicators"] = mdata.indicators.model_dump() if mdata.indicators else {}
+        except Exception as e:
+            from fastapi import HTTPException
+            if isinstance(e, HTTPException):
+                raise e
+            raise HTTPException(status_code=503, detail=f"Cannot generate recommendation: live market data temporarily unavailable for {ticker}.")
         return state
 
     @staticmethod

@@ -56,6 +56,7 @@ class MarketDataManager:
         # Async Single-Flight Lock Map for Request Deduplication
         self._in_flight: Dict[str, asyncio.Event] = {}
         self._in_flight_results: Dict[str, MarketData] = {}
+        self._in_flight_exceptions: Dict[str, Exception] = {}
         self._in_flight_lock = asyncio.Lock()
 
     async def get_market_data(self, ticker: str, force_refresh: bool = False) -> MarketData:
@@ -89,10 +90,15 @@ class MarketDataManager:
         if event_to_wait:
             await event_to_wait.wait()
             async with self._in_flight_lock:
+                if ticker_clean in self._in_flight_exceptions:
+                    # Clean up exception if it's been read, to prevent memory leak
+                    # We can't pop immediately if multiple waiters, but we can safely raise it
+                    raise self._in_flight_exceptions[ticker_clean]
                 return self._in_flight_results.get(ticker_clean) or market_cache.get_stale_market_data(ticker_clean)
 
         # 3. Execute Fetch via Provider Chain
         market_data: Optional[MarketData] = None
+        fetch_exception = None
         try:
             for provider in self.providers:
                 try:
@@ -105,7 +111,12 @@ class MarketDataManager:
                     logger.warning(f"Provider {provider.name} failed for {ticker_clean}: {ex}")
 
             if not market_data or not market_data.quote:
-                raise ValueError(f"Could not retrieve live market data for ticker '{ticker_clean}' from Yahoo Finance.")
+                from fastapi import HTTPException
+                fetch_exception = HTTPException(
+                    status_code=503, 
+                    detail=f"Live market data temporarily unavailable for ticker '{ticker_clean}'. All configured providers failed. Please ensure a fallback provider key (e.g. FINNHUB_API_KEY) is configured."
+                )
+                raise fetch_exception
 
             # 4. Attach Technical Indicators Calculation
             self._compute_and_attach_indicators(market_data)
@@ -113,14 +124,26 @@ class MarketDataManager:
             # 5. Save to Cache
             market_cache.set_market_data(ticker_clean, market_data)
 
+        except Exception as e:
+            fetch_exception = e
+            raise e
         finally:
             # Release single-flight waiters
             async with self._in_flight_lock:
                 if market_data:
                     self._in_flight_results[ticker_clean] = market_data
+                if fetch_exception:
+                    self._in_flight_exceptions[ticker_clean] = fetch_exception
                 if ticker_clean in self._in_flight:
                     evt = self._in_flight.pop(ticker_clean)
                     evt.set()
+                # Clean up memory dynamically by scheduling a delayed pop
+                async def cleanup(t):
+                    await asyncio.sleep(5)
+                    async with self._in_flight_lock:
+                        self._in_flight_results.pop(t, None)
+                        self._in_flight_exceptions.pop(t, None)
+                asyncio.create_task(cleanup(ticker_clean))
 
         return market_data
 

@@ -29,11 +29,18 @@ class StockService:
     @staticmethod
     async def get_stock_quote(ticker: str) -> StockQuoteResponse:
         mdata = await market_data_manager.get_market_data(ticker)
+        if not mdata or not getattr(mdata, 'quote', None):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail=f"Live market quote unavailable for {ticker}.")
         return mdata.quote
 
     @staticmethod
     async def get_stock_history_data(ticker: str, period: str = "1Y", interval: str = "1d") -> Tuple[pd.DataFrame, List[CandlePoint]]:
         mdata = await market_data_manager.get_market_data(ticker)
+        if not mdata:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail=f"Live market history unavailable for {ticker}.")
+            
         df = getattr(mdata, '_dataframe', None)
         if df is None or df.empty:
             if mdata.candles:
@@ -42,17 +49,24 @@ class StockService:
                 df.rename(columns={"open": "Open", "high": "High", "low": "Low", "close": "Close", "volume": "Volume"}, inplace=True)
             else:
                 df = pd.DataFrame()
-        return df, mdata.candles
+        return df, getattr(mdata, 'candles', [])
 
     @staticmethod
     async def get_stock_history(ticker: str, period: str = "1Y", interval: str = "1d") -> List[CandlePoint]:
         mdata = await market_data_manager.get_market_data(ticker)
-        return mdata.candles
+        if not mdata:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail=f"Live market history unavailable for {ticker}.")
+        return getattr(mdata, 'candles', [])
 
     @staticmethod
     async def get_stock_indicators(ticker: str, period: str = "1Y") -> IndicatorsResponse:
         mdata = await market_data_manager.get_market_data(ticker)
-        if mdata.indicators:
+        if not mdata:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail=f"Live market indicators unavailable for {ticker}.")
+            
+        if getattr(mdata, 'indicators', None):
             return mdata.indicators
         
         # Fallback if indicators not attached
