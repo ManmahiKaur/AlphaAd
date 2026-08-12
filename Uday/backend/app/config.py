@@ -18,7 +18,8 @@ class Settings(BaseSettings):
     
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "")
-    SQLITE_FALLBACK: str = "sqlite+aiosqlite:///./stock_advisor.db"
+    # Use /tmp for SQLite on Vercel to avoid read-only filesystem errors
+    SQLITE_FALLBACK: str = "sqlite+aiosqlite:////tmp/stock_advisor.db" if os.getenv("VERCEL") == "1" else "sqlite+aiosqlite:///./stock_advisor.db"
     
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "development_only_secret_change_me")
