@@ -17,7 +17,21 @@ def get_engine_args():
         db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
     connect_args = {}
-    # Neon PostgreSQL requires SSL
+    
+    # asyncpg does not support 'sslmode' as a query parameter. We must strip it out
+    # and instead configure SSL directly via connect_args.
+    if "?sslmode=require" in db_url:
+        db_url = db_url.replace("?sslmode=require", "")
+        connect_args["ssl"] = "require"
+    elif "&sslmode=require" in db_url:
+        db_url = db_url.replace("&sslmode=require", "")
+        connect_args["ssl"] = "require"
+
+    # Clean up trailing question mark if sslmode was the only query parameter
+    if db_url.endswith("?"):
+        db_url = db_url[:-1]
+
+    # Neon PostgreSQL always requires SSL
     if "neon.tech" in db_url:
         connect_args["ssl"] = "require"
 
