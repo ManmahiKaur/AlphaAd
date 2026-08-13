@@ -9,6 +9,21 @@ export const RecommendationCard: React.FC<{ rec: Recommendation; currency?: stri
   if (rec.recommendation === 'BUY') badgeVariant = 'green';
   if (rec.recommendation === 'SELL') badgeVariant = 'red';
 
+  const simplifiedReasons = rec.reasons.map((r) => {
+    if (r.includes('Moving Average Alignment')) {
+      return 'The current price is above its recent average, suggesting an upward trend.';
+    }
+    if (r.includes('Momentum Profile')) {
+      return 'Recent price movement shows positive momentum.';
+    }
+    if (r.includes('Fundamental Health')) {
+      return "The company's valuation looks reasonable compared with similar companies.";
+    }
+    if (r.includes('Risk/Reward Ratio')) {
+      return 'The potential gain is higher than the planned downside.';
+    }
+    return r;
+  });
   return (
     <Card className="bg-white border border-blue-200 shadow-sm rounded-xl space-y-5 p-5">
       {/* Header Badge & Title */}
@@ -18,8 +33,8 @@ export const RecommendationCard: React.FC<{ rec: Recommendation; currency?: stri
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 text-base">LangGraph AI Rating</h3>
-            <span className="text-[11px] text-slate-500">Confidence Score: <strong className="text-blue-600">{rec.confidence}%</strong></span>
+            <h3 className="font-bold text-slate-900 text-xl">AI Stock Rating</h3>
+            <span className="text-sm text-slate-600">Confidence: <strong className="text-green-600">{rec.confidence}%</strong></span>
           </div>
         </div>
 
@@ -31,8 +46,8 @@ export const RecommendationCard: React.FC<{ rec: Recommendation; currency?: stri
       {/* Target Price Grid */}
       <div className="grid grid-cols-3 gap-3 bg-blue-50 p-3.5 rounded-xl border border-blue-200 text-xs">
         <div>
-          <span className="block text-slate-500 uppercase font-semibold text-[10px]">Entry Price</span>
-          <span className="font-mono font-bold text-slate-900">{formatCurrency(rec.entry_price, currency)}</span>
+            <span className="block text-slate-500 uppercase font-semibold text-[10px]">Entry Price</span>
+            <span className="font-mono font-bold text-slate-900">{formatCurrency(rec.entry_price, currency)}</span>
         </div>
         <div>
           <span className="block text-slate-500 uppercase font-semibold text-[10px] flex items-center gap-1">
@@ -58,9 +73,9 @@ export const RecommendationCard: React.FC<{ rec: Recommendation; currency?: stri
 
       {/* Rationale Bullet Points */}
       <div className="space-y-2 bg-white p-2">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">Key Drivers & Technical Signals</h4>
+        <h4 className="text-sm font-bold text-slate-800">Why this rating?</h4>
         <ul className="space-y-1.5">
-          {rec.reasons.map((r, i) => (
+          {simplifiedReasons.slice(0, 4).map((r, i) => (
             <li key={i} className="text-xs text-slate-600 flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <span>{r}</span>
@@ -69,10 +84,17 @@ export const RecommendationCard: React.FC<{ rec: Recommendation; currency?: stri
         </ul>
       </div>
 
-      {/* Risk & Disclaimer Footer */}
-      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-900 flex items-start gap-2">
-        <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-        <span>{rec.disclaimer}</span>
+      {/* Overall Risk */}
+      <div className="flex items-center gap-2 text-sm mt-2">
+        <span className="font-medium text-slate-800">Overall Risk:</span>
+        <span className={rec.risk_assessment?.toLowerCase() === 'low' ? 'text-green-600' : rec.risk_assessment?.toLowerCase() === 'medium' ? 'text-amber-600' : 'text-red-600'}>
+          {rec.risk_assessment || 'N/A'}
+        </span>
+      </div>
+      {/* Disclaimer */}
+      <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-700 flex items-start gap-2 mt-2">
+        <ShieldAlert className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+        <span>⚠️ AI-generated educational analysis. This is not financial advice.</span>
       </div>
     </Card>
   );
