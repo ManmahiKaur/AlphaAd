@@ -31,7 +31,7 @@ export const Footer: React.FC = () => {
           <div>
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">AI Intelligence</h4>
             <ul className="space-y-2 text-xs text-slate-600">
-              <li>LangGraph Multi-Node Workflow Agent</li>
+
               <li>Technical Momentum & Trend Analysis</li>
               <li>Fundamental Metric Evaluation</li>
               <li>Conversational Advisor Chatbot</li>
@@ -47,7 +47,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="pt-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} AlphaAdvisor AI. Engineered with FastAPI, React 19 & LangGraph.</p>
+          <p>© {new Date().getFullYear()} AlphaAdvisor AI. All rights reserved.</p>
           <div className="flex gap-4 mt-2 md:mt-0">
             <span className="hover:text-blue-600 cursor-pointer">Privacy Policy</span>
             <span className="hover:text-blue-600 cursor-pointer">Terms of Service</span>
