@@ -20,6 +20,7 @@ export const StockDetailPage: React.FC = () => {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [loading, setLoading] = useState(true);
   const [recLoading, setRecLoading] = useState(false);
+  const [recError, setRecError] = useState<string | null>(null);
   const [tradeModalOpen, setTradeModalOpen] = useState(false);
   const [inWatchlist, setInWatchlist] = useState(false);
 
@@ -45,12 +46,14 @@ export const StockDetailPage: React.FC = () => {
   }, [tickerClean]);
 
   const handleGenerateAI = async () => {
+    setRecError(null);
     setRecLoading(true);
     try {
       const rec = await aiApi.getRecommendation(tickerClean);
       setRecommendation(rec);
-    } catch (err) {
+    } catch (err:any) {
       console.error('Failed to generate recommendation:', err);
+      setRecError(err?.message || 'Failed to generate recommendation');
     } finally {
       setRecLoading(false);
     }
@@ -155,29 +158,28 @@ export const StockDetailPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-blue-600" /> AI Analyst
+              <Sparkles className="w-5 h-5 text-blue-600" /> AI-Powered Stock Analysis
             </h3>
-            {!recommendation && (
-              <Button onClick={handleGenerateAI} disabled={recLoading} variant="primary">
-                {recLoading ? 'Running LangGraph Agent...' : 'Generate Rating'}
-              </Button>
-            )}
+
           </div>
 
-          {recommendation ? (
-            <RecommendationCard rec={recommendation} currency={quote.currency} />
-          ) : (
-            <Card className="text-center py-12 space-y-3">
-              <Sparkles className="w-8 h-8 text-blue-600 mx-auto animate-pulse" />
-              <h4 className="text-sm font-bold text-slate-900">Run LangGraph Multi-Node Analysis</h4>
-              <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                Evaluates RSI momentum, MACD signals, support/resistance levels, and generates structured Buy/Hold/Sell target prices.
-              </p>
-              <Button onClick={handleGenerateAI} disabled={recLoading} variant="primary">
-                {recLoading ? 'Analyzing...' : 'Generate AI Recommendation'}
-              </Button>
-            </Card>
-          )}
+            {recommendation ? (
+              <RecommendationCard rec={recommendation} currency={quote.currency} />
+            ) : (
+              <Card className="text-center py-12 space-y-3">
+                {recError && (
+                  <p className="text-sm text-red-600 font-medium">Error: {recError}</p>
+                )}
+                <Sparkles className="w-8 h-8 text-blue-600 mx-auto animate-pulse" />
+                <h4 className="text-sm font-bold text-slate-900">AI-Powered Stock Analysis</h4>
+                <p className="text-xs text-slate-600 max-w-sm mx-auto">
+                  Analyze technical momentum, market trends, support and resistance levels, and key stock indicators to generate an AI-assisted evaluation.
+                </p>
+                <Button onClick={handleGenerateAI} disabled={recLoading} variant="primary">
+                  {recLoading ? 'Analyzing...' : 'Generate AI Recommendation'}
+                </Button>
+              </Card>
+            )}
         </div>
 
         {/* Right: Embedded Stock Financial Chatbot */}
