@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCountry } from '../../context/CountryContext';
-import { TrendingUp, LayoutDashboard, Compass, Briefcase, Bookmark, Bot, User as UserIcon, Shield, LogOut, Globe, Sun, Moon } from 'lucide-react';
+import { TrendingUp, LayoutDashboard, Compass, Briefcase, Bookmark, Bot, User as UserIcon, Shield, LogOut, Globe } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -131,13 +131,16 @@ export const Navbar: React.FC = () => {
                 <LogOut className="w-4 h-4" />
               </button>
               {/* Theme toggle button */}
-              <button
+              {/* <button
                 onClick={toggleTheme}
+                classNam/e="hidden p-2 rounded-lg text-slate-500 hover:text-blue-600 transition-colors"
                 className="p-2 rounded-lg text-slate-500 hover:text-blue-600 transition-colors"
-                title="Toggle Theme"
+                className="hidden"
+                title="Toggle Them/e"
               >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
+                {theme === 'dark' ?  className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {null}
+              </button> */}
             </div>
           ) : (
             <div className="flex items-center gap-2">

@@ -15,9 +15,9 @@ export const LandingPage: React.FC = () => {
     <div className="space-y-24 py-12">
       {/* Hero Banner */}
       <section className="text-center max-w-4xl mx-auto space-y-6">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold">
+        {/* <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold">
           <Sparkles className="w-3.5 h-3.5" /> Next-Gen AI Stock Intelligence Engine
-        </div>
+        </div> */}
 
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent">
           AI Stock Analysis & <br />

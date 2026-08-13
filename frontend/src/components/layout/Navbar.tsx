@@ -131,13 +131,12 @@ export const Navbar: React.FC = () => {
                 <LogOut className="w-4 h-4" />
               </button>
               {/* Theme toggle button */}
-              <button
+              {/* <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg text-slate-500 hover:text-blue-600 transition-colors"
-                title="Toggle Theme"
               >
                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
+              </button> */}
             </div>
           ) : (
             <div className="flex items-center gap-2">
