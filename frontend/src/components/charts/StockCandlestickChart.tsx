@@ -68,7 +68,7 @@ export const StockCandlestickChart: React.FC<ChartProps> = ({ candles, indicator
               type="checkbox"
               checked={showSMA20}
               onChange={(e) => setShowSMA20(e.target.checked)}
-              className="accent-blue-600 rounded"
+              className="accent-orange-600 rounded"
             />
             SMA 20
           </label>
@@ -77,7 +77,7 @@ export const StockCandlestickChart: React.FC<ChartProps> = ({ candles, indicator
               type="checkbox"
               checked={showSMA50}
               onChange={(e) => setShowSMA50(e.target.checked)}
-              className="accent-blue-600 rounded"
+              className="accent-purple-600 rounded"
             />
             SMA 50
           </label>
@@ -86,7 +86,7 @@ export const StockCandlestickChart: React.FC<ChartProps> = ({ candles, indicator
               type="checkbox"
               checked={showBollinger}
               onChange={(e) => setShowBollinger(e.target.checked)}
-              className="accent-blue-600 rounded"
+              className="accent-brown-600 rounded"
             />
             Bollinger Bands
           </label>
@@ -132,10 +132,10 @@ export const StockCandlestickChart: React.FC<ChartProps> = ({ candles, indicator
               formatter={(value: any, name: any) => [`${currSymbol}${Number(value).toFixed(2)}`, name]}
             />
             <Area type="monotone" dataKey="close" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#priceGrad)" name="Price" />
-            {showSMA20 && <Line type="monotone" dataKey="sma20" stroke="#3B82F6" strokeWidth={1.5} dot={false} name="SMA 20" />}
-            {showSMA50 && <Line type="monotone" dataKey="sma50" stroke="#60A5FA" strokeWidth={1.5} dot={false} name="SMA 50" />}
-            {showBollinger && <Line type="monotone" dataKey="bbUpper" stroke="#94A3B8" strokeDasharray="3 3" dot={false} name="BB Upper" />}
-            {showBollinger && <Line type="monotone" dataKey="bbLower" stroke="#94A3B8" strokeDasharray="3 3" dot={false} name="BB Lower" />}
+            {showSMA20 && <Line type="monotone" dataKey="sma20" stroke="#F59E0B" strokeWidth={1.5} dot={false} name="SMA 20" />}
+            {showSMA50 && <Line type="monotone" dataKey="sma50" stroke="#8B5CF6" strokeWidth={1.5} dot={false} name="SMA 50" />}
+            {showBollinger && <Line type="monotone" dataKey="bbUpper" stroke="#A16207" strokeDasharray="3 3" dot={false} name="BB Upper" />}
+            {showBollinger && <Line type="monotone" dataKey="bbLower" stroke="#A16207" strokeDasharray="3 3" dot={false} name="BB Lower" />}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -149,7 +149,7 @@ export const StockCandlestickChart: React.FC<ChartProps> = ({ candles, indicator
               <XAxis dataKey="time" hide />
               <YAxis domain={[0, 100]} ticks={[30, 50, 70]} stroke="#64748b" tick={{ fontSize: 10 }} orientation="right" />
               <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: '#93C5FD', borderRadius: '8px', fontSize: '11px', color: '#0f172a' }} />
-              <Line type="monotone" dataKey="rsi" stroke="#2563EB" strokeWidth={1.5} dot={false} name="RSI (14)" />
+              <Line type="monotone" dataKey="rsi" stroke="#8B5CF6" strokeWidth={1.5} dot={false} name="RSI (14)" />
             </ComposedChart>
           ) : subChart === 'macd' ? (
             <ComposedChart data={chartData}>
@@ -157,8 +157,8 @@ export const StockCandlestickChart: React.FC<ChartProps> = ({ candles, indicator
               <XAxis dataKey="time" hide />
               <YAxis stroke="#64748b" tick={{ fontSize: 10 }} orientation="right" />
               <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: '#93C5FD', borderRadius: '8px', fontSize: '11px', color: '#0f172a' }} />
-              <Line type="monotone" dataKey="macdVal" stroke="#2563EB" strokeWidth={1.5} dot={false} name="MACD" />
-              <Line type="monotone" dataKey="macdSignal" stroke="#94A3B8" strokeWidth={1.5} dot={false} name="Signal" />
+              <Line type="monotone" dataKey="macdVal" stroke="#16A34A" strokeWidth={1.5} dot={false} name="MACD" />
+              <Line type="monotone" dataKey="macdSignal" stroke="#DC2626" strokeWidth={1.5} dot={false} name="Signal" />
             </ComposedChart>
           ) : (
             <BarChart data={chartData}>
@@ -166,7 +166,7 @@ export const StockCandlestickChart: React.FC<ChartProps> = ({ candles, indicator
               <XAxis dataKey="time" hide />
               <YAxis stroke="#64748b" tick={{ fontSize: 10 }} orientation="right" />
               <Tooltip contentStyle={{ backgroundColor: '#ffffff', borderColor: '#93C5FD', borderRadius: '8px', fontSize: '11px', color: '#0f172a' }} />
-              <Bar dataKey="volume" fill="#93C5FD" name="Volume" />
+              <Bar dataKey="volume" fill="#0F766E" name="Volume" />
             </BarChart>
           )}
         </ResponsiveContainer>
