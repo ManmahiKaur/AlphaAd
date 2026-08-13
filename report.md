@@ -149,7 +149,7 @@ Calculates 9 technical indicators synchronously using pure NumPy and Pandas:
 ### Feature 3: LangGraph Multi-Node AI Recommendation Engine
 - **State Graph Topology**: `fetch_data_node` $\rightarrow$ `technical_analysis_node` $\rightarrow$ `recommendation_generator_node`.
 - **Target Price Determination**: Calculates exact mathematical Target Price and Stop Loss based on ATR volatility bounds and key resistance/support levels.
-- **Output Schema**: Recommendation Signal (`BUY`, `HOLD`, `SELL`), Confidence Rating (%), Summary, Technical Analysis, Fundamental Rationale, Risk Assessment, Entry Price, Stop Loss, Target Price, Time Horizon, and Educational Disclaimer.
+
 
 ### Feature 4: Gemini 2.5 Flash Financial Advisor Chatbot
 - **Conversational AI**: Multi-turn dialogue powered by `gemini-2.5-flash`.

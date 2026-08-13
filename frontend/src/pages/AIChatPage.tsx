@@ -14,9 +14,7 @@ export const AIChatPage: React.FC = () => {
             Ask multi-turn queries regarding technical indicators, stock comparisons, portfolio risk, or general market principles.
           </p>
         </div>
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-600 text-xs font-semibold">
-          <Sparkles className="w-3.5 h-3.5" /> LangGraph Active
-        </div>
+
       </div>
 
       <ChatWindow />

@@ -104,19 +104,17 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
             className={`flex gap-3 max-w-[90%] ${m.sender === 'user' ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
           >
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                m.sender === 'user' ? 'bg-blue-600 text-white font-bold' : 'bg-blue-50 text-blue-600 border border-blue-200'
-              }`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.sender === 'user' ? 'bg-blue-600 text-white font-bold' : 'bg-blue-50 text-blue-600 border border-blue-200'
+                }`}
             >
               {m.sender === 'user' ? <UserIcon className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
             </div>
 
             <div
-              className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
-                m.sender === 'user'
-                  ? 'bg-blue-600 text-white font-medium rounded-tr-none shadow-sm'
-                  : 'bg-blue-50 text-slate-900 border border-blue-100 rounded-tl-none shadow-sm'
-              }`}
+              className={`p-3.5 rounded-2xl text-xs leading-relaxed ${m.sender === 'user'
+                ? 'bg-blue-600 text-white font-medium rounded-tr-none shadow-sm'
+                : 'bg-blue-50 text-slate-900 border border-blue-100 rounded-tl-none shadow-sm'
+                }`}
             >
               {m.sender === 'user' ? (
                 <div className="whitespace-pre-wrap font-medium">{m.message}</div>
@@ -125,7 +123,7 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
               )}
               {m.sources && m.sources.length > 0 && (
                 <div className="mt-2.5 pt-2 border-t border-blue-200 text-[10px] text-slate-500">
-                  <strong className="text-slate-700">Data Sources:</strong> {m.sources.join(' • ')}
+                  <strong className="text-slate-700">AI CAN MAKE MISTAKES </strong> {m.sources.join(' • ')}
                 </div>
               )}
               <span className="block text-[9px] opacity-70 text-right mt-1 font-mono">{m.timestamp}</span>

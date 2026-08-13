@@ -224,7 +224,6 @@ GUIDELINES FOR DIFFERENT QUESTION TYPES:
 FORMATTING REQUIREMENTS:
 - Use clean Markdown headers (e.g. ### Header), bold text, and bullet lists.
 - Keep responses concise, engaging, highly structured, and conversational.
-- Include a brief educational disclaimer at the end when giving stock outlooks.
 
 {context_str}
 

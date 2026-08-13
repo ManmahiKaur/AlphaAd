@@ -15,7 +15,7 @@ class FinancialAdvisorChatbot:
         chat_history: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         query_lower = user_query.lower()
-        sources = ["AI Quantitative Math Engine", "Centralized Market Data Layer"]
+        sources = []
 
         # Determine target ticker from context or query keywords
         target_ticker = ticker_context.upper() if ticker_context else None
@@ -113,7 +113,7 @@ class FinancialAdvisorChatbot:
                     "reasons": rec.get("reasons"),
                     "disclaimer": rec.get("disclaimer")
                 }
-                sources.append(f"{target_ticker} Quote & Quantitative Indicators (Cached)")
+                # sources.append(f"{target_ticker} Quote & Quantitative Indicators (Cached)")
             except Exception as err:
                 print(f"Warning: Failed to fetch market data for {target_ticker}: {err}")
 
@@ -142,7 +142,6 @@ class FinancialAdvisorChatbot:
                 "• **RSI < 30**: Indicates the stock is **Oversold** and may present a bullish buying opportunity.\n"
                 "• **RSI ~ 50**: Indicates a neutral momentum state."
             )
-            sources.append("Investopedia Technical Analysis Knowledge Base")
         elif "macd" in query_lower:
             response = (
                 "**MACD (Moving Average Convergence Divergence)** tracks the relationship between two exponential moving averages (typically 12-period and 26-period EMAs).\n\n"
@@ -159,9 +158,7 @@ class FinancialAdvisorChatbot:
                 f"• **Target Price**: ${rec_data['target_price']} | **Stop Loss**: ${rec_data['stop_loss']}\n"
                 f"• **Summary**: {rec_data['summary']}\n\n"
                 f"**Key Reasons**:\n{rec_data['reasons']}\n\n"
-                f"_*Educational Disclaimer*: {rec_data['disclaimer']}_"
             )
-            sources.append(f"LangGraph Agent Analysis ({active_ticker})")
         else:
             response = (
                 f"I am your AI Financial Advisor. I can analyze stocks across the **US (NASDAQ/NYSE)** and **Indian (NSE)** markets, compute 9 technical indicators (RSI, MACD, SMA, EMA, VWAP, Bollinger Bands, ATR, OBV, ADX), assist with virtual portfolio risk management, and explain finance concepts.\n\n"
