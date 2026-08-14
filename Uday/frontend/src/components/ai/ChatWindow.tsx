@@ -9,7 +9,7 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
     {
       id: '1',
       sender: 'ai',
-      message: `Hello! I am your AI Financial Advisor. ${tickerContext ? `Currently analyzing ${tickerContext}.` : 'Ask me anything about stocks, technical indicators (RSI, MACD), or portfolio strategy!'}`,
+      message: `Hello! I am your AI Financial Advisor. ${tickerContext ? `Currently analyzing ${tickerContext}.` : 'What would you like to analyze?'}`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -85,7 +85,13 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
 
       {/* Suggested Prompt Pills */}
       <div className="bg-white px-4 py-2 border-b border-slate-200 flex items-center gap-2 overflow-x-auto text-xs no-scrollbar">
-        {['Should I buy Apple?', 'Compare Tesla and Nvidia', 'Explain RSI', 'What is diversification?'].map((pill, i) => (
+        {[
+          '📊 Analyze a stock',
+          '⚖️ Compare two stocks',
+          '📈 Explain a technical indicator',
+          '💼 Analyze portfolio risk',
+          '🔀 Explain diversification'
+        ].map((pill, i) => (
           <button
             key={i}
             onClick={() => handlePillClick(pill)}
@@ -104,19 +110,17 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
             className={`flex gap-3 max-w-[90%] ${m.sender === 'user' ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
           >
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                m.sender === 'user' ? 'bg-blue-600 text-white font-bold' : 'bg-blue-50 text-blue-600 border border-blue-200'
-              }`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${m.sender === 'user' ? 'bg-blue-600 text-white font-bold' : 'bg-blue-50 text-blue-600 border border-blue-200'
+                }`}
             >
               {m.sender === 'user' ? <UserIcon className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
             </div>
 
             <div
-              className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
-                m.sender === 'user'
-                  ? 'bg-blue-600 text-white font-medium rounded-tr-none shadow-sm'
-                  : 'bg-blue-50 text-slate-900 border border-blue-100 rounded-tl-none shadow-sm'
-              }`}
+              className={`p-3.5 rounded-2xl text-xs leading-relaxed ${m.sender === 'user'
+                ? 'bg-blue-600 text-white font-medium rounded-tr-none shadow-sm'
+                : 'bg-blue-50 text-slate-900 border border-blue-100 rounded-tl-none shadow-sm'
+                }`}
             >
               {m.sender === 'user' ? (
                 <div className="whitespace-pre-wrap font-medium">{m.message}</div>

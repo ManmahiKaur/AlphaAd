@@ -44,7 +44,7 @@ class FinancialAdvisorChatbot:
         }
         # Added typo variations for better ticker detection
         known_map["tsc"] = "TCS.NS"
-        known_map["tata"] = "TATAMOTORS.NS"
+
         for kw, t in known_map.items():
             if kw in query_lower and t not in target_tickers:
                 target_tickers.append(t)
@@ -58,6 +58,35 @@ class FinancialAdvisorChatbot:
 
         # Ensure we don't have too many, limit to 2 for comparison
         target_tickers = target_tickers[:2]
+        # Handle follow-up clarification or ambiguous 'Tata' references
+        # If we have fewer than 2 tickers, try to combine with previous user message
+        if len(target_tickers) < 2:
+            # Look for previous user message in chat_history
+            prev_user = None
+            if chat_history:
+                for msg in reversed(chat_history):
+                    if msg.get('role') == 'user' and msg.get('content') != user_query:
+                        prev_user = msg.get('content')
+                        break
+            if prev_user:
+                combined = prev_user + " " + user_query
+                combined_lower = combined.lower()
+                # Re-extract tickers from combined query
+                target_tickers = []
+                for kw, t in known_map.items():
+                    if kw in combined_lower and t not in target_tickers:
+                        target_tickers.append(t)
+                if not target_tickers:
+                    import re as _re
+                    matches = _re.findall(r'\b[A-Z]{2,5}(?:\.[A-Z]{2})?\b', combined)
+                    for m in matches:
+                        if m not in target_tickers:
+                            target_tickers.append(m)
+                target_tickers = target_tickers[:2]
+        # If still ambiguous 'tata' after attempts, ask clarification
+        if "tata" in query_lower and not any(t.startswith("TATAMOTORS") or t.startswith("TATASTEEL") for t in target_tickers):
+            response = "Your query mentions \"Tata\" which could refer to Tata Motors or Tata Steel. Which one do you mean?"
+            return {"message": response, "sources": sources, "timestamp": datetime.utcnow()}
         target_ticker = target_tickers[0] if target_tickers else None
 
         # Fetch unified MarketData objects & quantitative indicators
@@ -200,7 +229,7 @@ class FinancialAdvisorChatbot:
                 if atr is not None:
                     response += f"- ATR (risk proxy): {atr}\n"
                 response += "\n_Data is real‑time; please consult a qualified financial advisor before acting._"
-                sources.append("Quantitative Stock Analysis Engine")
+                # sources.append("Quantitative Stock Analysis Engine")
                 return {"message": response, "sources": sources, "timestamp": datetime.utcnow()}
 
         # 4. Ambiguous or unclear request – ask for clarification

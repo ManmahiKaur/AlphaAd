@@ -9,7 +9,8 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
     {
       id: '1',
       sender: 'ai',
-      message: `Hello! I am your AI Financial Advisor. ${tickerContext ? `Currently analyzing ${tickerContext}.` : 'Ask me anything about stocks, technical indicators (RSI, MACD), or portfolio strategy!'}`,
+      // message: `Hello! I am your AI Financial Advisor. ${tickerContext ? `Currently analyzing ${tickerContext}.` : 'Ask me anything about stocks, technical indicators (RSI, MACD), or portfolio strategy!'}`,
+      message: `Hello! I am your AI Financial Advisor. ${tickerContext ? `Currently analyzing ${tickerContext}.` : 'What would you like to analyze?'}`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -31,10 +32,10 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
 
     const newHistory = [...messages, userMsg];
     setMessages(newHistory);
-      // Clear input only when the message came from the input field
-      if (forcedMessage === undefined) {
-        setInput('');
-      }
+    // Clear input only when the message came from the input field
+    if (forcedMessage === undefined) {
+      setInput('');
+    }
     setLoading(true);
 
     try {
@@ -79,23 +80,23 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
 
 
   // Simplify AI messages for non‑technical users
-   const simplifyMessage = (msg: string) => {
-     return msg
-       .replace(/strong bullish momentum/gi, 'positive trend')
-       .replace(/key moving averages/gi, 'recent averages')
-       .replace(/valuation metrics/gi, 'valuation')
-       .replace(/strong bullish/gi, 'positive')
-       .replace(/bullish/gi, 'positive')
-       .replace(/bearish/gi, 'negative')
-       .replace(/Moving Average Alignment[^:]*:/gi, 'Price trend:')
-       .replace(/Momentum Profile[^:]*:/gi, 'Momentum:')
-       // Simplify RSI description
-       .replace(/Relative Strength Index \(RSI\)[\s\S]*?scale of 0 to 100\./gi, 'RSI shows whether a stock has been going up or down strongly. It uses a scale from 0 to 100.')
-       // Simple RSI level explanations
-       .replace(/RSI above 70[^.]*\./gi, 'The stock may have gone up too quickly and could come down or slow down.')
-       .replace(/RSI below 30[^.]*\./gi, 'The stock may have fallen too much and could start recovering.')
-       .replace(/RSI around 50[^.]*\./gi, 'The stock is in a neutral position. There is no strong upward or downward signal.');
-   };
+  const simplifyMessage = (msg: string) => {
+    return msg
+      .replace(/strong bullish momentum/gi, 'positive trend')
+      .replace(/key moving averages/gi, 'recent averages')
+      .replace(/valuation metrics/gi, 'valuation')
+      .replace(/strong bullish/gi, 'positive')
+      .replace(/bullish/gi, 'positive')
+      .replace(/bearish/gi, 'negative')
+      .replace(/Moving Average Alignment[^:]*:/gi, 'Price trend:')
+      .replace(/Momentum Profile[^:]*:/gi, 'Momentum:')
+      // Simplify RSI description
+      .replace(/Relative Strength Index \(RSI\)[\s\S]*?scale of 0 to 100\./gi, 'RSI shows whether a stock has been going up or down strongly. It uses a scale from 0 to 100.')
+      // Simple RSI level explanations
+      .replace(/RSI above 70[^.]*\./gi, 'The stock may have gone up too quickly and could come down or slow down.')
+      .replace(/RSI below 30[^.]*\./gi, 'The stock may have fallen too much and could start recovering.')
+      .replace(/RSI around 50[^.]*\./gi, 'The stock is in a neutral position. There is no strong upward or downward signal.');
+  };
   // Format currency for Indian stocks (RELIANCE.NS)
   const formatCurrency = (msg: string) => {
     if (tickerContext?.toUpperCase() === 'RELIANCE.NS') {
@@ -107,7 +108,7 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
     }
     return msg;
   };
-    return (
+  return (
     <div className="flex flex-col h-[550px] w-full bg-white rounded-2xl border border-blue-200 overflow-hidden shadow-sm">
       {/* Chat Header */}
       <div className="bg-white px-4 py-3 border-b border-slate-200 flex items-center justify-between">
@@ -117,9 +118,9 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
           </div>
           <div>
             <h3 className="font-bold text-slate-900 text-sm">AI Financial Advisor</h3>
-              <span className="text-[10px] text-slate-500 font-semibold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" /> <span className="text-green-600">Online</span> • AI-powered financial guidance
-              </span>
+            <span className="text-[10px] text-slate-500 font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping" /> <span className="text-green-600">Online</span> • AI-powered financial guidance
+            </span>
           </div>
         </div>
       </div>
@@ -173,7 +174,7 @@ export const ChatWindow: React.FC<{ tickerContext?: string }> = ({ tickerContext
         ))}
         {loading && (
           <div className="flex items-center gap-2 text-xs text-blue-900 bg-blue-50 p-3 rounded-2xl w-fit rounded-tl-none border border-blue-100">
-              <Sparkles className="w-4 h-4 animate-pulse" /> Processing...
+            <Sparkles className="w-4 h-4 animate-pulse" /> Processing...
           </div>
         )}
       </div>
