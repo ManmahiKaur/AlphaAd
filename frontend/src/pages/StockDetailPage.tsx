@@ -43,6 +43,18 @@ export const StockDetailPage: React.FC = () => {
       }
     };
     fetchStockData();
+    // Reset AI recommendation state on ticker change / page load
+    setRecommendation(null);
+    setRecError(null);
+    // Load persisted recommendation if exists
+    const stored = localStorage.getItem(`ai-recommendation-${tickerClean}`);
+    if (stored) {
+      try {
+        setRecommendation(JSON.parse(stored));
+      } catch (e) {
+        console.error('Failed to parse stored recommendation', e);
+      }
+    }
   }, [tickerClean]);
 
   const handleGenerateAI = async () => {
@@ -51,9 +63,11 @@ export const StockDetailPage: React.FC = () => {
     try {
       const rec = await aiApi.getRecommendation(tickerClean);
       setRecommendation(rec);
+      // Persist successful recommendation
+      localStorage.setItem(`ai-recommendation-${tickerClean}`, JSON.stringify(rec));
     } catch (err:any) {
       console.error('Failed to generate recommendation:', err);
-      setRecError(err?.message || 'Failed to generate recommendation');
+      setRecError('Unable to generate the AI analysis right now. Please try again.');
     } finally {
       setRecLoading(false);
     }
@@ -167,16 +181,16 @@ export const StockDetailPage: React.FC = () => {
               <RecommendationCard rec={recommendation} currency={quote.currency} />
             ) : (
               <Card className="text-center py-12 space-y-3">
-                {recError && (
-                  <p className="text-sm text-red-600 font-medium">Error: {recError}</p>
-                )}
+                  {recError && (
+                    <p className="text-sm text-red-600 font-medium">{recError}</p>
+                  )}
                 <Sparkles className="w-8 h-8 text-blue-600 mx-auto animate-pulse" />
                 <h4 className="text-sm font-bold text-slate-900">AI-Powered Stock Analysis</h4>
                 <p className="text-xs text-slate-600 max-w-sm mx-auto">
                   Analyze technical momentum, market trends, support and resistance levels, and key stock indicators to generate an AI-assisted evaluation.
                 </p>
                 <Button onClick={handleGenerateAI} disabled={recLoading} variant="primary">
-                  {recLoading ? 'Analyzing...' : 'Generate AI Recommendation'}
+                  {recLoading ? 'Analyzing stock...' : 'Generate AI Recommendation'}
                 </Button>
               </Card>
             )}

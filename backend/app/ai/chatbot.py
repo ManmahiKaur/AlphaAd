@@ -17,153 +17,196 @@ class FinancialAdvisorChatbot:
         query_lower = user_query.lower()
         sources = []
 
-        # Determine target ticker from context or query keywords
-        target_ticker = ticker_context.upper() if ticker_context else None
-        if not target_ticker:
-            known_map = {
-                "apple": "AAPL", "aapl": "AAPL",
-                "nvidia": "NVDA", "nvda": "NVDA",
-                "tesla": "TSLA", "tsla": "TSLA",
-                "microsoft": "MSFT", "msft": "MSFT",
-                "google": "GOOGL", "googl": "GOOGL", "alphabet": "GOOGL",
-                "amazon": "AMZN", "amzn": "AMZN",
-                "meta": "META", "facebook": "META",
-                "amd": "AMD",
-                "reliance": "RELIANCE.NS",
-                "tcs": "TCS.NS",
-                "infosys": "INFY.NS", "infy": "INFY.NS",
-                "hdfc": "HDFCBANK.NS", "hdfcbank": "HDFCBANK.NS",
-                "icici": "ICICIBANK.NS", "icicibank": "ICICIBANK.NS",
-                "tata motors": "TATAMOTORS.NS", "tatamotors": "TATAMOTORS.NS",
-                "airtel": "BHARTIARTL.NS", "bharti": "BHARTIARTL.NS",
-                "wipro": "WIPRO.NS",
-                "netflix": "NFLX", "nflx": "NFLX",
-                "walmart": "WMT", "wmt": "WMT",
-            }
-            for kw, t in known_map.items():
-                if kw in query_lower:
-                    target_ticker = t
-                    break
+        # Determine target tickers from context or query keywords
+        target_tickers = []
+        if ticker_context:
+            target_tickers.append(ticker_context.upper())
 
-            if not target_ticker:
-                import re
-                matches = re.findall(r'\b[A-Z]{2,5}(?:\.[A-Z]{2})?\b', user_query)
-                if matches:
-                    target_ticker = matches[0]
-                else:
-                    words = [w for w in query_lower.split() if len(w) >= 3 and w not in ("what", "how", "should", "buy", "sell", "stock", "price", "about", "tell", "show", "give", "share")]
-                    for word in words:
-                        search_res = await market_data_manager.search_stocks(word)
-                        if search_res:
-                            target_ticker = search_res[0].ticker
-                            break
+        known_map = {
+            "apple": "AAPL", "aapl": "AAPL",
+            "nvidia": "NVDA", "nvda": "NVDA",
+            "tesla": "TSLA", "tsla": "TSLA",
+            "microsoft": "MSFT", "msft": "MSFT",
+            "google": "GOOGL", "googl": "GOOGL", "alphabet": "GOOGL",
+            "amazon": "AMZN", "amzn": "AMZN",
+            "meta": "META", "facebook": "META",
+            "amd": "AMD",
+            "reliance": "RELIANCE.NS",
+            "tcs": "TCS.NS",
+            "infosys": "INFY.NS", "infy": "INFY.NS",
+            "hdfc": "HDFCBANK.NS", "hdfcbank": "HDFCBANK.NS",
+            "icici": "ICICIBANK.NS", "icicibank": "ICICIBANK.NS",
+            "tata motors": "TATAMOTORS.NS", "tatamotors": "TATAMOTORS.NS",
+            "airtel": "BHARTIARTL.NS", "bharti": "BHARTIARTL.NS",
+            "wipro": "WIPRO.NS",
+            "netflix": "NFLX", "nflx": "NFLX",
+            "walmart": "WMT", "wmt": "WMT",
+        }
+        # Added typo variations for better ticker detection
+        known_map["tsc"] = "TCS.NS"
+        known_map["tata"] = "TATAMOTORS.NS"
+        for kw, t in known_map.items():
+            if kw in query_lower and t not in target_tickers:
+                target_tickers.append(t)
 
-        # Fetch unified MarketData object & quantitative indicators
-        stock_data = None
-        if target_ticker:
+        if not target_tickers:
+            import re
+            matches = re.findall(r'\b[A-Z]{2,5}(?:\.[A-Z]{2})?\b', user_query)
+            for m in matches:
+                if m not in target_tickers:
+                    target_tickers.append(m)
+
+        # Ensure we don't have too many, limit to 2 for comparison
+        target_tickers = target_tickers[:2]
+        target_ticker = target_tickers[0] if target_tickers else None
+
+        # Fetch unified MarketData objects & quantitative indicators
+        stock_data = {}
+        for ticker in target_tickers:
             try:
-                mdata = await market_data_manager.get_market_data(target_ticker)
+                mdata = await market_data_manager.get_market_data(ticker)
                 quote = mdata.quote.model_dump()
                 indicators = mdata.indicators.model_dump() if mdata.indicators else {}
-                rec = await StockAnalysisAgent.run_analysis(target_ticker)
+                rec = await StockAnalysisAgent.run_analysis(ticker)
 
-                # Extract latest indicator values cleanly
                 def get_latest(key, default=None):
                     vals = indicators.get(key)
                     if isinstance(vals, list) and len(vals) > 0:
                         return vals[-1]
                     return default
 
-                latest_sma20 = get_latest("sma_20")
-                latest_sma50 = get_latest("sma_50")
-                latest_ema20 = get_latest("ema_20")
-                latest_rsi = get_latest("rsi", 50.0)
-                latest_atr = get_latest("atr")
-                latest_vwap = get_latest("vwap")
-                latest_obv = get_latest("obv")
-                latest_adx = get_latest("adx")
-                macd_dict = indicators.get("macd", {})
-                latest_macd_line = macd_dict.get("macd", [None])[-1] if macd_dict.get("macd") else None
-                latest_macd_signal = macd_dict.get("signal", [None])[-1] if macd_dict.get("signal") else None
-                bb_dict = indicators.get("bollinger_bands", {})
-                latest_bb_upper = bb_dict.get("upper", [None])[-1] if bb_dict.get("upper") else None
-                latest_bb_lower = bb_dict.get("lower", [None])[-1] if bb_dict.get("lower") else None
-
-                stock_data = {
-                    "ticker": target_ticker,
+                stock_data[ticker] = {
+                    "ticker": ticker,
                     "quote": quote,
                     "quantitative_indicators": {
-                        "sma_20": latest_sma20,
-                        "sma_50": latest_sma50,
-                        "ema_20": latest_ema20,
-                        "rsi": latest_rsi,
-                        "macd_line": latest_macd_line,
-                        "macd_signal": latest_macd_signal,
-                        "atr": latest_atr,
-                        "adx": latest_adx,
-                        "bollinger_upper": latest_bb_upper,
-                        "bollinger_lower": latest_bb_lower,
-                        "vwap": latest_vwap,
-                        "obv": latest_obv,
+                        "sma_20": get_latest("sma_20"),
+                        "rsi": get_latest("rsi", 50.0),
+                        "macd_line": indicators.get("macd", {}).get("macd", [None])[-1] if indicators.get("macd") else None,
                     },
                     "recommendation": rec.get("recommendation"),
                     "confidence": rec.get("confidence"),
-                    "target_price": rec.get("target_price"),
-                    "stop_loss": rec.get("stop_loss"),
-                    "reasons": rec.get("reasons"),
-                    "disclaimer": rec.get("disclaimer")
                 }
-                # sources.append(f"{target_ticker} Quote & Quantitative Indicators (Cached)")
             except Exception as err:
-                print(f"Warning: Failed to fetch market data for {target_ticker}: {err}")
+                print(f"Warning: Failed to fetch market data for {ticker}: {err}")
 
-        # Try Gemini 3.6 Flash conversational narrative reasoning
-        if LLMService.is_available():
-            llm_response = LLMService.answer_chat_query(
-                user_query=user_query,
-                ticker_context=target_ticker or ticker_context,
-                stock_data=stock_data,
-                portfolio_context=portfolio_context,
-                chat_history=chat_history
-            )
-            if llm_response:
-                sources.append("Gemini 3.6 Flash Reasoning Engine")
+                # Detect comparison intent early and handle it before generic LLM routing
+        if any(kw in query_lower for kw in ["compare", "compare between", "compara", "which is better", "which should i buy", "difference between", "vs", "versus"]):
+            if len(target_tickers) >= 2:
+                t1, t2 = target_tickers[0], target_tickers[1]
+                d1, d2 = stock_data.get(t1), stock_data.get(t2)
+                response = f"### 📊 Comparative Analysis: {t1} vs {t2}\n\n"
+                recs = {}
+                for t, d in [(t1, d1), (t2, d2)]:
+                    if not d:
+                        continue
+                    quote = d["quote"]
+                    q = d["quantitative_indicators"]
+                    price = quote.get("current_price", "N/A")
+                    change_pct = quote.get("percent_change", "N/A")
+                    market_cap = quote.get("market_cap")
+                    pe = quote.get("pe_ratio")
+                    dividend = quote.get("dividend_yield")
+                    rsi = q.get("rsi")
+                    sma20 = q.get("sma_20")
+                    atr = q.get("atr")
+                    recommendation = d.get("recommendation", "N/A")
+                    confidence = d.get("confidence", "N/A")
+                    recs[t] = {"rec": recommendation, "conf": confidence}
+                    response += f"**{t}**\n"
+                    response += f"- Price: ${price} ({change_pct}%)\n"
+                    if market_cap:
+                        response += f"- Market Cap: ${market_cap/1e9:.2f}B\n"
+                    if pe:
+                        response += f"- P/E Ratio: {pe:.2f}\n"
+                    if dividend:
+                        response += f"- Dividend Yield: {dividend:.2f}%\n"
+                    response += f"- Recommendation: {recommendation} (Confidence: {confidence}%)\n"
+                    if isinstance(rsi, (int, float)):
+                        response += f"- RSI: {rsi:.2f}\n"
+                    if sma20 is not None:
+                        response += f"- SMA‑20: {sma20}\n"
+                    if atr is not None:
+                        response += f"- ATR (risk proxy): {atr}\n"
+                    response += "\n"
+                def best_stock(rec_dict):
+                    buys = [t for t, v in rec_dict.items() if v["rec"] == "BUY"]
+                    if len(buys) == 1:
+                        return buys[0]
+                    sorted_conf = sorted(rec_dict.items(), key=lambda kv: kv[1]["conf"] if isinstance(kv[1]["conf"], (int, float)) else 0, reverse=True)
+                    return sorted_conf[0][0] if sorted_conf else None
+                winner = best_stock(recs)
+                if winner:
+                    response += f"**Conclusion:** Based on recommendation and confidence, **{winner}** appears to be the stronger buy candidate.\n"
+                else:
+                    response += "**Conclusion:** No clear winner could be derived from the available data.\n"
+                response += "\n_The above analysis uses real‑time market data and technical indicators. Please consult a qualified financial advisor before making investment decisions._"
+                sources.append("Quantitative Comparison Engine")
                 return {
-                    "message": llm_response,
+                    "message": response,
                     "sources": sources,
                     "timestamp": datetime.utcnow()
                 }
+        # Determine intent and respond accordingly
+        # 1. Comparison is already handled above
+        # 2. Educational explanations
+        edu_keywords = ["explain", "definition", "what is", "meaning of", "describe"]
+        if any(kw in query_lower for kw in edu_keywords) and not target_tickers:
+            # Use LLM to explain the concept
+            if LLMService.is_available():
+                llm_response = LLMService.answer_chat_query(
+                    user_query=user_query,
+                    ticker_context=None,
+                    stock_data=None,
+                    portfolio_context=portfolio_context,
+                    chat_history=chat_history
+                )
+                if llm_response:
+                    sources.append("Gemini 3.6 Flash Reasoning Engine")
+                    return {"message": llm_response, "sources": sources, "timestamp": datetime.utcnow()}
+            # Fallback simple message
+            response = "I’m ready to explain that concept, but I’m currently unable to retrieve the details."
+            return {"message": response, "sources": sources, "timestamp": datetime.utcnow()}
 
-        # --- FALLBACK: Deterministic Rule-Based Response Path (Only if Gemini fails) ---
-        if "rsi" in query_lower:
-            response = (
-                "**Relative Strength Index (RSI)** is a momentum oscillator that measures the speed and change of price movements on a scale of 0 to 100.\n\n"
-                "• **RSI > 70**: Indicates the stock is **Overbought** and may be due for a consolidation or pullback.\n"
-                "• **RSI < 30**: Indicates the stock is **Oversold** and may present a bullish buying opportunity.\n"
-                "• **RSI ~ 50**: Indicates a neutral momentum state."
-            )
-        elif "macd" in query_lower:
-            response = (
-                "**MACD (Moving Average Convergence Divergence)** tracks the relationship between two exponential moving averages (typically 12-period and 26-period EMAs).\n\n"
-                "• **Bearish MACD**: Occurs when the MACD Line crosses **below** the Signal Line or the Histogram turns negative.\n"
-                "• **Bullish MACD**: Occurs when the MACD Line crosses **above** the Signal Line."
-            )
-            sources.append("Quantitative Momentum Framework")
-        elif "buy" in query_lower or target_ticker:
-            active_ticker = target_ticker or "AAPL"
-            rec_data = await StockAnalysisAgent.run_analysis(active_ticker)
-            response = (
-                f"### 🤖 AI Evaluation for {active_ticker}\n\n"
-                f"**Recommendation**: **{rec_data['recommendation']}** (Confidence: {rec_data['confidence']}%)\n\n"
-                f"• **Target Price**: ${rec_data['target_price']} | **Stop Loss**: ${rec_data['stop_loss']}\n"
-                f"• **Summary**: {rec_data['summary']}\n\n"
-                f"**Key Reasons**:\n{rec_data['reasons']}\n\n"
-            )
-        else:
-            response = (
-                f"I am your AI Financial Advisor. I can analyze stocks across the **US (NASDAQ/NYSE)** and **Indian (NSE)** markets, compute 9 technical indicators (RSI, MACD, SMA, EMA, VWAP, Bollinger Bands, ATR, OBV, ADX), assist with virtual portfolio risk management, and explain finance concepts.\n\n"
-                "Try asking: *'Should I buy Apple?'*, *'Compare Tesla and Nvidia'*, or *'Explain RSI'*."
-            )
+        # 3. Stock‑specific queries (single ticker)
+        if target_tickers:
+            ticker = target_tickers[0]
+            data = stock_data.get(ticker)
+            if data:
+                quote = data["quote"]
+                q = data["quantitative_indicators"]
+                price = quote.get("current_price", "N/A")
+                change_pct = quote.get("percent_change", "N/A")
+                market_cap = quote.get("market_cap")
+                pe = quote.get("pe_ratio")
+                dividend = quote.get("dividend_yield")
+                rsi = q.get("rsi")
+                sma20 = q.get("sma_20")
+                atr = q.get("atr")
+                recommendation = data.get("recommendation", "N/A")
+                confidence = data.get("confidence", "N/A")
+                response = f"### 📈 Analysis for {ticker}\n"
+                response += f"- Price: ${price} ({change_pct}%)\n"
+                if market_cap:
+                    response += f"- Market Cap: ${market_cap/1e9:.2f}B\n"
+                if pe:
+                    response += f"- P/E Ratio: {pe:.2f}\n"
+                if dividend:
+                    response += f"- Dividend Yield: {dividend:.2f}%\n"
+                response += f"- Recommendation: {recommendation} (Confidence: {confidence}%)\n"
+                if isinstance(rsi, (int, float)):
+                    response += f"- RSI: {rsi:.2f}\n"
+                if sma20 is not None:
+                    response += f"- SMA‑20: {sma20}\n"
+                if atr is not None:
+                    response += f"- ATR (risk proxy): {atr}\n"
+                response += "\n_Data is real‑time; please consult a qualified financial advisor before acting._"
+                sources.append("Quantitative Stock Analysis Engine")
+                return {"message": response, "sources": sources, "timestamp": datetime.utcnow()}
+
+        # 4. Ambiguous or unclear request – ask for clarification
+        response = "I’m not sure what you’re asking. Could you please clarify your request?"
+        return {"message": response, "sources": sources, "timestamp": datetime.utcnow()}
+
 
         return {
             "message": response,
