@@ -6,10 +6,10 @@ import pandas as pd
 from app.market.models import MarketData
 from app.market.cache import market_cache
 from app.market.providers.base import BaseMarketDataProvider
+from app.market.providers.yfinance import YFinanceProvider
 from app.market.providers.finnhub import FinnhubProvider
 from app.market.providers.twelvedata import TwelveDataProvider
 from app.market.providers.alphavantage import AlphaVantageProvider
-from app.market.providers.yfinance import YFinanceProvider
 from app.market.providers.fallback import SyntheticFallbackProvider
 from app.utils.indicators import compute_all_indicators
 from app.schemas.schemas import StockQuoteResponse, CandlePoint, IndicatorsResponse, StockSearchResult
@@ -26,14 +26,18 @@ POPULAR_STOCKS_DATA = [
     {"ticker": "AMZN", "name": "Amazon.com, Inc.", "exchange": "NASDAQ", "country": "US", "sector": "Consumer Cyclical", "industry": "Internet Retail"},
     {"ticker": "META", "name": "Meta Platforms, Inc.", "exchange": "NASDAQ", "country": "US", "sector": "Communication Services", "industry": "Internet Content"},
     {"ticker": "AMD", "name": "Advanced Micro Devices, Inc.", "exchange": "NASDAQ", "country": "US", "sector": "Technology", "industry": "Semiconductors"},
-    {"ticker": "RELIANCE.NS", "name": "Reliance Industries Limited", "exchange": "NSE", "country": "IN", "sector": "Energy", "industry": "Oil & Gas Integration"},
+    {"ticker": "RELIANCE.NS", "name": "Reliance Industries Limited", "exchange": "NSE", "country": "IN", "sector": "Energy", "industry": "Oil & Gas Refining"},
     {"ticker": "TCS.NS", "name": "Tata Consultancy Services Limited", "exchange": "NSE", "country": "IN", "sector": "Technology", "industry": "IT Services"},
     {"ticker": "INFY.NS", "name": "Infosys Limited", "exchange": "NSE", "country": "IN", "sector": "Technology", "industry": "IT Services"},
     {"ticker": "HDFCBANK.NS", "name": "HDFC Bank Limited", "exchange": "NSE", "country": "IN", "sector": "Financial Services", "industry": "Private Bank"},
     {"ticker": "ICICIBANK.NS", "name": "ICICI Bank Limited", "exchange": "NSE", "country": "IN", "sector": "Financial Services", "industry": "Private Bank"},
-    {"ticker": "TATAMOTORS.NS", "name": "Tata Motors Limited", "exchange": "NSE", "country": "IN", "sector": "Consumer Cyclical", "industry": "Auto Manufacturers"},
+    {"ticker": "SBIN.NS", "name": "State Bank of India", "exchange": "NSE", "country": "IN", "sector": "Financial Services", "industry": "Public Bank"},
     {"ticker": "BHARTIARTL.NS", "name": "Bharti Airtel Limited", "exchange": "NSE", "country": "IN", "sector": "Communication Services", "industry": "Telecom Services"},
     {"ticker": "WIPRO.NS", "name": "Wipro Limited", "exchange": "NSE", "country": "IN", "sector": "Technology", "industry": "IT Services"},
+    {"ticker": "ITC.NS", "name": "ITC Limited", "exchange": "NSE", "country": "IN", "sector": "Consumer Defensive", "industry": "Tobacco & FMCG"},
+    {"ticker": "LT.NS", "name": "Larsen & Toubro Limited", "exchange": "NSE", "country": "IN", "sector": "Industrials", "industry": "Engineering & Construction"},
+    {"ticker": "MARUTI.NS", "name": "Maruti Suzuki India Limited", "exchange": "NSE", "country": "IN", "sector": "Consumer Cyclical", "industry": "Auto Manufacturers"},
+    {"ticker": "TATAPOWER.NS", "name": "Tata Power Company Limited", "exchange": "NSE", "country": "IN", "sector": "Utilities", "industry": "Electric Utilities"},
 ]
 
 class MarketDataManager:
@@ -45,12 +49,13 @@ class MarketDataManager:
       Router/Service -> MarketDataManager -> Cache -> Single-Flight Deduplication -> Provider Chain -> Return MarketData
     """
     def __init__(self):
-        # Ordered Provider Pipeline (YFinance -> Finnhub -> Twelve Data -> Alpha Vantage)
+        # Ordered Provider Pipeline (YFinance Direct -> Finnhub -> Twelve Data -> Alpha Vantage -> SyntheticFallback)
         self.providers: List[BaseMarketDataProvider] = [
             YFinanceProvider(),
             FinnhubProvider(),
             TwelveDataProvider(),
-            AlphaVantageProvider()
+            AlphaVantageProvider(),
+            SyntheticFallbackProvider()
         ]
         
         # Async Single-Flight Lock Map for Request Deduplication
@@ -62,15 +67,15 @@ class MarketDataManager:
     async def get_market_data(self, ticker: str, force_refresh: bool = False) -> MarketData:
         ticker_clean = ticker.strip().upper()
 
-        # 1. Check Active Cache
+        # 1. Check Active Cache (bypass if previously cached with SyntheticFallback)
         if not force_refresh:
             cached_data = market_cache.get_market_data(ticker_clean)
-            if cached_data:
+            if cached_data and cached_data.provider_name != "SyntheticFallback":
                 return cached_data
 
             # Check Stale Cache (return stale immediately & background refresh)
             stale_data = market_cache.get_stale_market_data(ticker_clean)
-            if stale_data:
+            if stale_data and stale_data.provider_name != "SyntheticFallback":
                 logger.info(f"Returning stale cache for {ticker_clean} & scheduling background refresh")
                 asyncio.create_task(self._background_refresh(ticker_clean))
                 return stale_data
@@ -91,10 +96,10 @@ class MarketDataManager:
             await event_to_wait.wait()
             async with self._in_flight_lock:
                 if ticker_clean in self._in_flight_exceptions:
-                    # Clean up exception if it's been read, to prevent memory leak
-                    # We can't pop immediately if multiple waiters, but we can safely raise it
                     raise self._in_flight_exceptions[ticker_clean]
-                return self._in_flight_results.get(ticker_clean) or market_cache.get_stale_market_data(ticker_clean)
+                result = self._in_flight_results.get(ticker_clean) or market_cache.get_stale_market_data(ticker_clean)
+                if result:
+                    return result
 
         # 3. Execute Fetch via Provider Chain
         market_data: Optional[MarketData] = None
@@ -114,7 +119,7 @@ class MarketDataManager:
                 from fastapi import HTTPException
                 fetch_exception = HTTPException(
                     status_code=503, 
-                    detail=f"Live market data temporarily unavailable for ticker '{ticker_clean}'. All configured providers failed. Please ensure a fallback provider key (e.g. FINNHUB_API_KEY) is configured."
+                    detail=f"Live market data temporarily unavailable for ticker '{ticker_clean}'. All configured providers failed."
                 )
                 raise fetch_exception
 
@@ -137,13 +142,6 @@ class MarketDataManager:
                 if ticker_clean in self._in_flight:
                     evt = self._in_flight.pop(ticker_clean)
                     evt.set()
-                # Clean up memory dynamically by scheduling a delayed pop
-                async def cleanup(t):
-                    await asyncio.sleep(5)
-                    async with self._in_flight_lock:
-                        self._in_flight_results.pop(t, None)
-                        self._in_flight_exceptions.pop(t, None)
-                asyncio.create_task(cleanup(ticker_clean))
 
         return market_data
 
@@ -153,11 +151,15 @@ class MarketDataManager:
         if not unique_tickers:
             return {}
         tasks = [self.get_market_data(t) for t in unique_tickers]
-        results = await asyncio.gather(*tasks)
-        return {t: res for t, res in zip(unique_tickers, results)}
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        ret = {}
+        for t, res in zip(unique_tickers, results):
+            if isinstance(res, MarketData):
+                ret[t] = res
+        return ret
 
-    async def search_stocks(self, query: str, country: Optional[str] = None) -> List[StockSearchResult]:
-        query_clean = query.strip().upper()
+    async def search_stocks(self, query: str = "", country: Optional[str] = None) -> List[StockSearchResult]:
+        query_clean = (query or "").strip().upper()
         cache_key = f"SEARCH_{query_clean}_{country or 'ALL'}"
         
         cached = market_cache.get_search(cache_key)
@@ -175,6 +177,26 @@ class MarketDataManager:
                             break
             except Exception as e:
                 logger.warning(f"Error executing dynamic search: {e}")
+
+        # Local pre-seeded matching for instant results & offline/fallback resilience
+        local_results: List[StockSearchResult] = []
+        for item in POPULAR_STOCKS_DATA:
+            if country and country.upper() != item.get("country", "").upper():
+                continue
+            if not query_clean or (
+                query_clean in item["ticker"].upper() or
+                query_clean in item["name"].upper() or
+                query_clean in (item.get("sector") or "").upper() or
+                query_clean in (item.get("industry") or "").upper()
+            ):
+                local_results.append(StockSearchResult(**item))
+
+        # Merge local results with provider results, deduplicating by ticker
+        seen_tickers = set(r.ticker.upper() for r in results)
+        for lr in local_results:
+            if lr.ticker.upper() not in seen_tickers:
+                results.append(lr)
+                seen_tickers.add(lr.ticker.upper())
 
         market_cache.set_search(cache_key, results)
         return results

@@ -1,5 +1,6 @@
 import React from 'react';
 import { TrendingUp, ShieldCheck, Zap, Globe } from 'lucide-react';
+import { AlphaAdvisorLogo } from '../ui/AlphaAdvisorLogo';
 
 export const Footer: React.FC = () => {
   return (
@@ -7,11 +8,8 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-white stroke-[3]" />
-              </div>
-              <span className="font-bold text-slate-900">AlphaAdvisor AI</span>
+            <div className="mb-4">
+              <AlphaAdvisorLogo size="sm" showText={true} />
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
               Production-grade AI Powered Stock Analysis & Virtual Portfolio Advisor supporting both Indian (NSE) and US (NASDAQ/NYSE) capital markets.

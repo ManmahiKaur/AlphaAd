@@ -21,6 +21,8 @@ export const authApi = {
 export const stocksApi = {
   search: async (query: string, country?: string) =>
     (await api.get<StockSearchResult[]>('/stocks/search', { params: { query, country } })).data,
+  getTrending: async (country?: string) =>
+    (await api.get<StockQuote[]>('/stocks/trending', { params: { country } })).data,
   getQuote: async (ticker: string) =>
     (await api.get<StockQuote>(`/stocks/${encodeURIComponent(ticker)}/quote`)).data,
   getHistory: async (ticker: string, period = '1Y') =>

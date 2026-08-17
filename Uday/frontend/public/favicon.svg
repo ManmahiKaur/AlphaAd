@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="alphaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+    <linearGradient id="chartGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  <!-- Background Shield/Hexagon -->
+  <path d="M256 24L480 128V384L256 488L32 384V128L256 24Z" fill="url(#alphaGrad)" opacity="0.1" />
+  
+  <!-- The Alpha (α) Symbol -->
+  <path d="M340 320C340 370 290 400 240 400C180 400 130 350 130 280C130 200 190 140 260 140C310 140 340 170 360 210L320 230C310 200 290 180 260 180C210 180 175 220 175 280C175 330 210 360 250 360C280 360 300 340 300 320V260H240V220H340V320Z" fill="url(#alphaGrad)" />
+  
+  <!-- The Ascending Chart (Up Arrow) -->
+  <path d="M380 200L450 130L480 160V80H400L430 110L360 180L310 130L200 240L230 270L310 190L380 200Z" fill="url(#chartGrad)" />
+</svg>

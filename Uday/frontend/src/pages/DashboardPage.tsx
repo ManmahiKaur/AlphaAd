@@ -18,23 +18,32 @@ export const DashboardPage: React.FC = () => {
   const [trendingStocks, setTrendingStocks] = useState<StockQuote[]>([]);
   const [topPickRec, setTopPickRec] = useState<Recommendation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [trendingLoading, setTrendingLoading] = useState(true);
+  const [trendingError, setTrendingError] = useState(false);
+
+  const fetchTrending = async () => {
+    setTrendingLoading(true);
+    setTrendingError(false);
+    try {
+      const quotes = await stocksApi.getTrending(country);
+      setTrendingStocks(quotes);
+    } catch (err) {
+      console.error('Failed to load trending stocks:', err);
+      setTrendingError(true);
+    } finally {
+      setTrendingLoading(false);
+    }
+  };
 
   useEffect(() => {
     const loadDashboardData = async () => {
       setLoading(true);
       try {
-        const [portData, stocksData, recData] = await Promise.all([
+        const [portData, recData] = await Promise.all([
           portfolioApi.getSummary(),
-          stocksApi.search('', country),
           aiApi.getRecommendation(country === 'IN' ? 'RELIANCE.NS' : 'AAPL')
         ]);
         setPortfolio(portData);
-
-        // Fetch detailed quotes for trending stocks
-        const quotes = await Promise.all(
-          stocksData.slice(0, 4).map((s) => stocksApi.getQuote(s.ticker))
-        );
-        setTrendingStocks(quotes);
         setTopPickRec(recData);
       } catch (err) {
         console.error('Failed to load dashboard:', err);
@@ -43,6 +52,7 @@ export const DashboardPage: React.FC = () => {
       }
     };
     loadDashboardData();
+    fetchTrending();
   }, [country]);
 
   return (
@@ -125,10 +135,26 @@ export const DashboardPage: React.FC = () => {
             </Link>
           </div>
 
-          {loading ? (
+          {trendingLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Skeleton className="h-40" />
               <Skeleton className="h-40" />
+              <Skeleton className="h-40" />
+              <Skeleton className="h-40" />
+            </div>
+          ) : trendingError ? (
+            <div className="flex flex-col items-center justify-center py-10 bg-rose-50/50 rounded-2xl border border-rose-100">
+              <p className="text-rose-600 font-medium mb-3">Market data is temporarily unavailable.</p>
+              <button 
+                onClick={fetchTrending}
+                className="px-4 py-2 bg-rose-100 text-rose-700 font-bold rounded-lg hover:bg-rose-200 transition-colors text-sm"
+              >
+                Retry
+              </button>
+            </div>
+          ) : trendingStocks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 bg-slate-50/50 rounded-2xl border border-slate-100">
+              <p className="text-slate-500 font-medium">No trending equities found at this time.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

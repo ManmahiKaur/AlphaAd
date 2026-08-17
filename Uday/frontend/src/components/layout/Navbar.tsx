@@ -5,6 +5,7 @@ import { useCountry } from '../../context/CountryContext';
 import { TrendingUp, LayoutDashboard, Compass, Briefcase, Bookmark, Bot, User as UserIcon, Shield, LogOut, Globe } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 import { useTheme } from '../../context/ThemeContext';
+import { AlphaAdvisorLogo } from '../ui/AlphaAdvisorLogo';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -25,18 +26,8 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-            <TrendingUp className="w-5 h-5 text-white stroke-[2.5]" />
-          </div>
-          <div>
-            <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent">
-              AlphaAdvisor
-            </span>
-            <span className="block text-[10px] text-blue-600 font-semibold tracking-widest uppercase">
-              AI Virtual Portfolio
-            </span>
-          </div>
+        <Link to="/" className="group hover:scale-[1.02] transition-transform">
+          <AlphaAdvisorLogo size="md" showText={true} />
         </Link>
 
         {/* Navigation Links */}
